@@ -93,7 +93,8 @@ class SumoAgent:
     def take_action(self, action):
         current_phase_number = self.get_current_phase()
         rewards_detail_dict_list = []
-        if (self.current_phase_duration < self.para_set.MIN_PHASE_TIME[current_phase_number]):
+
+        if self.current_phase_duration < self.para_set.MIN_PHASE_TIME[current_phase_number]:
             action = 0
         for i in range(self.para_set.MIN_ACTION_TIME):
             action_in_second = 0
@@ -101,12 +102,12 @@ class SumoAgent:
             if action == 1 and i == 0:
                 action_in_second = 1
             self.current_phase, self.current_phase_duration, self.vehicle_dict = map_computor.run(action=action_in_second,
-                                                                               current_phase=current_phase_number,
-                                                                               current_phase_duration=self.current_phase_duration,
-                                                                               vehicle_dict=self.dic_vehicles,
-                                                                               rewards_info_dict=self.para_set.REWARDS_INFO_DICT,
-                                                                               f_log_rewards=self.f_log_rewards,
-                                                                               rewards_detail_dict_list=rewards_detail_dict_list)  # run 1s SUMO
+                                                                                                  current_phase=current_phase_number,
+                                                                                                  current_phase_duration=self.current_phase_duration,
+                                                                                                  vehicle_dict=self.dic_vehicles,
+                                                                                                  rewards_info_dict=self.para_set.REWARDS_INFO_DICT,
+                                                                                                  f_log_rewards=self.f_log_rewards,
+                                                                                                  rewards_detail_dict_list=rewards_detail_dict_list)  # run 1s SUMO
 
         #reward, reward_detail_dict = self.cal_reward(action)
         reward = self.cal_reward_from_list(rewards_detail_dict_list)

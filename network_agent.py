@@ -115,25 +115,26 @@ class NetworkAgent(Agent):
         self.q_network.save(os.path.join(self.path_set.PATH_TO_MODEL, "%s_q_network.h5" % file_name))
 
     def choose(self, count, if_pretrain):
-
-        ''' choose the best action for current state '''
+        """ choose the best action for current state """
 
         q_values = self.q_network.predict(self.convert_state_to_input(self.state))
         # print(q_values)
         if if_pretrain:
             self.action = np.argmax(q_values[0])
         else:
+            # Exploration
             if random.random() <= self.para_set.EPSILON:  # continue explore new Random Action
                 self.action = random.randrange(len(q_values[0]))
                 print("##Explore")
-            else:  # exploitation
+            # Exploitation
+            else:
                 self.action = np.argmax(q_values[0])
+
             if self.para_set.EPSILON > 0.001 and count >= 20000:
                 self.para_set.EPSILON = self.para_set.EPSILON * 0.9999
         return self.action, q_values
 
     def build_memory(self):
-
         return []
 
     def build_network_from_copy(self, network_copy):

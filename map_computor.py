@@ -552,11 +552,12 @@ def set_all_red(dic_vehicles,rewards_info_dict,f_log_rewards,rewards_detail_dict
         log_rewards(dic_vehicles, 0, rewards_info_dict, f_log_rewards, timestamp,rewards_detail_dict_list)
         update_vehicles_state(dic_vehicles)
 
-def run(action, current_phase, current_phase_duration, vehicle_dict, rewards_info_dict, f_log_rewards, rewards_detail_dict_list,node_id="node0"):
+
+def run(action, current_phase, current_phase_duration, vehicle_dict, rewards_info_dict, f_log_rewards, rewards_detail_dict_list, node_id="node0"):
     return_phase = current_phase
     return_phase_duration = current_phase_duration
     if action == 1:
-        set_yellow(vehicle_dict,rewards_info_dict,f_log_rewards, rewards_detail_dict_list,node_id=node_id)
+        set_yellow(vehicle_dict, rewards_info_dict, f_log_rewards, rewards_detail_dict_list, node_id=node_id)
         # set_all_red(vehicle_dict,rewards_info_dict,f_log_rewards, node_id=node_id)
         return_phase, _ = changeTrafficLight_7(current_phase=current_phase)  # change traffic light in SUMO according to actionToPerform
         return_phase_duration = 0
@@ -564,8 +565,7 @@ def run(action, current_phase, current_phase_duration, vehicle_dict, rewards_inf
     traci.simulationStep()
     log_rewards(vehicle_dict, action, rewards_info_dict, f_log_rewards, timestamp, rewards_detail_dict_list)
     vehicle_dict = update_vehicles_state(vehicle_dict)
-    return return_phase, return_phase_duration+1, vehicle_dict
-
+    return return_phase, return_phase_duration + 1, vehicle_dict
 
 
 def get_base_min_time(traffic_volumes,min_phase_time):

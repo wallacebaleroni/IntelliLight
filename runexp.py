@@ -14,19 +14,6 @@ SEED = 31200
 
 setting_memo = "one_run"
 
-
-# first column: for train, second column: for spre_train
-list_traffic_files = [
-    [["cross.2phases_rou1_switch_rou0.xml"], ["cross.2phases_rou1_switch_rou0.xml"]],
-    [["cross.2phases_rou01_equal_300s.xml"], ["cross.2phases_rou01_equal_300s.xml"]],
-    [["cross.2phases_rou01_unequal_5_300s.xml"], ["cross.2phases_rou01_unequal_5_300s.xml"]],
-    [["cross.all_synthetic.rou.xml"], ["cross.all_synthetic.rou.xml"]],
-]
-
-list_model_name = [
-                   "Deeplight",
-                   ]
-
 # ================================= only change these two ========================================
 
 
@@ -43,26 +30,38 @@ import time
 
 PATH_TO_CONF = os.path.join("conf", setting_memo)
 
-sumoBinary = r"/usr/bin/sumo-gui"
+
+# Binaries and commands with GUI
+sumoBinary = "C:\Program Files (x86)\Eclipse\Sumo\\bin\sumo-gui.exe"
 sumoCmd = [sumoBinary,
            '-c',
-           r'{0}/data/{1}/cross.sumocfg'.format(os.path.split(os.path.realpath(__file__))[0], setting_memo)]
+           "D:\Google Drive\Estudos\Faculdade\\2019.2\Projeto Final II\Repositórios\IntelliLight\data\one_run\cross.sumocfg"]
 sumoCmd_pretrain = [sumoBinary,
                     '-c',
-                    r'{0}/data/{1}/cross_pretrain.sumocfg'.format(
-                        os.path.split(os.path.realpath(__file__))[0], setting_memo)]
+                    "D:\Google Drive\Estudos\Faculdade\\2019.2\Projeto Final II\Repositórios\IntelliLight\data\one_run\cross_pretrain.sumocfg"]
 
-sumoBinary_nogui = r"/usr/bin/sumo"
+# Binaries and commands without GUI
+sumoBinary_nogui = "C:\Program Files (x86)\Eclipse\Sumo\\bin\sumo.exe"
 sumoCmd_nogui = [sumoBinary_nogui,
                  '-c',
-                 r'{0}/data/{1}/cross.sumocfg'.format(
-                     os.path.split(os.path.realpath(__file__))[0], setting_memo)]
+                 'D:\Google Drive\Estudos\Faculdade\\2019.2\Projeto Final II\Repositórios\IntelliLight\data\one_run\cross.sumocfg']
 sumoCmd_nogui_pretrain = [sumoBinary_nogui,
                           '-c',
-                          r'{0}/data/{1}/cross_pretrain.sumocfg'.format(
-                              os.path.split(os.path.realpath(__file__))[0], setting_memo)]
+                          "D:\Google Drive\Estudos\Faculdade\\2019.2\Projeto Final II\Repositórios\IntelliLight\data\one_run\cross_pretrain.sumocfg"]
+
+
+# first column: for train, second column: for spre_train
+list_traffic_files = [
+    [["cross.2phases_rou1_switch_rou0.xml"], ["cross.2phases_rou1_switch_rou0.xml"]],
+    [["cross.2phases_rou01_equal_300s.xml"], ["cross.2phases_rou01_equal_300s.xml"]],
+    [["cross.2phases_rou01_unequal_5_300s.xml"], ["cross.2phases_rou01_unequal_5_300s.xml"]],
+    [["cross.all_synthetic.rou.xml"], ["cross.all_synthetic.rou.xml"]],
+]
+list_model_name = ["Deeplight",]
+
 
 for model_name in list_model_name:
+    # They are both the same file
     for traffic_file, traffic_file_pretrain in list_traffic_files:
         dic_exp = json.load(open(os.path.join(PATH_TO_CONF, "exp.conf"), "r"))
         dic_exp["MODEL_NAME"] = model_name
@@ -77,7 +76,7 @@ for model_name in list_model_name:
         json.dump(dic_exp, open(os.path.join(PATH_TO_CONF, "exp.conf"), "w"), indent=4)
 
         # change MIN_ACTION_TIME correspondingly
-
+        # TODO: what does MIN_ACTION_TIME do?
         dic_sumo = json.load(open(os.path.join(PATH_TO_CONF, "sumo_agent.conf"), "r"))
         if model_name == "Deeplight":
             dic_sumo["MIN_ACTION_TIME"] = 5
@@ -92,10 +91,11 @@ for model_name in list_model_name:
             time.strftime('%m_%d_%H_%M_%S_', time.localtime(time.time())) + "seed_%d" % SEED
         )
 
+        # Here you can choose to either run with a GUI or not
         traffic_light_dqn.main(memo=setting_memo, f_prefix=prefix, sumo_cmd_str=sumoCmd_nogui, sumo_cmd_pretrain_str=sumoCmd_nogui_pretrain)
 
         print("finished {0}".format(traffic_file))
-    print ("finished {0}".format(model_name))
+    print("finished {0}".format(model_name))
 
 
 

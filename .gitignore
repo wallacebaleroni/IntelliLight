@@ -38,3 +38,6 @@ data/SOTL*
 conf/Fixedtime*
 data/Fixedtime*
 
+anotacoes.txt
+resultados.txt
+*.ini
