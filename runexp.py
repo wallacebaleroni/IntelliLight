@@ -13,6 +13,7 @@ Run experiments in batch with configuration
 SEED = 31200
 
 setting_memo = "one_run"
+#setting_memo = "inga"
 
 # ================================= only change these two ========================================
 
@@ -57,7 +58,7 @@ list_traffic_files = [
     [["cross.2phases_rou01_unequal_5_300s.xml"], ["cross.2phases_rou01_unequal_5_300s.xml"]],
     [["cross.all_synthetic.rou.xml"], ["cross.all_synthetic.rou.xml"]],
 ]
-list_model_name = ["Deeplight",]
+list_model_name = ["Deeplight"]
 
 
 for model_name in list_model_name:

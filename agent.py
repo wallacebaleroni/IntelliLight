@@ -64,9 +64,7 @@ class Agent(object):
                     if self.STATE_FEATURE[feature_name]:
                         self.LIST_STATE_FEATURE.append(feature_name)
 
-    def __init__(self, num_phases,
-                 path_set):
-
+    def __init__(self, num_phases, path_set):
         self.path_set = path_set
         self.para_set = self.load_conf(os.path.join(self.path_set.PATH_TO_CONF, self.path_set.AGENT_CONF))
         shutil.copy(

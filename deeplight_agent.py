@@ -23,15 +23,8 @@ MEMO = "Deeplight"
 
 
 class DeeplightAgent(NetworkAgent):
-
-    def __init__(self,
-                 num_phases,
-                 num_actions,
-                 path_set):
-
-        super(DeeplightAgent, self).__init__(
-            num_phases=num_phases,
-            path_set=path_set)
+    def __init__(self, num_phases, num_actions, path_set):
+        super(DeeplightAgent, self).__init__(num_phases=num_phases, path_set=path_set)
 
         self.num_actions = num_actions
 
@@ -65,14 +58,13 @@ class DeeplightAgent(NetworkAgent):
                 for feature_name in self.para_set.LIST_STATE_FEATURE]
 
     def build_network(self):
-
-        '''Initialize a Q network'''
+        # Initialize a Q network
 
         # initialize feature node
         dic_input_node = {}
         for feature_name in self.para_set.LIST_STATE_FEATURE:
             dic_input_node[feature_name] = Input(shape=getattr(State, "D_"+feature_name.upper()),
-                                                     name="input_"+feature_name)
+                                                 name="input_"+feature_name)
 
         # add cnn to image features
         dic_flatten_node = {}
@@ -108,8 +100,7 @@ class DeeplightAgent(NetworkAgent):
         else:
             q_values = self._separate_network_structure(shared_dense, self.para_set.D_DENSE, self.num_actions)
 
-        network = Model(inputs=[dic_input_node[feature_name]
-                                for feature_name in self.para_set.LIST_STATE_FEATURE],
+        network = Model(inputs=[dic_input_node[feature_name] for feature_name in self.para_set.LIST_STATE_FEATURE],
                         outputs=q_values)
         network.compile(optimizer=RMSprop(lr=self.para_set.LEARNING_RATE),
                         loss="mean_squared_error")
