@@ -21,8 +21,8 @@ import os
 
 from agent import Agent, State
 
-class Selector(Layer):
 
+class Selector(Layer):
     def __init__(self, select, **kwargs):
         super(Selector, self).__init__(**kwargs)
         self.select = select
@@ -115,7 +115,7 @@ class NetworkAgent(Agent):
         self.q_network.save(os.path.join(self.path_set.PATH_TO_MODEL, "%s_q_network.h5" % file_name))
 
     def choose(self, count, if_pretrain):
-        """ choose the best action for current state """
+        # choose the best action for current state
 
         q_values = self.q_network.predict(self.convert_state_to_input(self.state))
         # print(q_values)
@@ -138,8 +138,7 @@ class NetworkAgent(Agent):
         return []
 
     def build_network_from_copy(self, network_copy):
-
-        '''Initialize a Q network from a copy'''
+        # Initialize a Q network from a copy
 
         network_structure = network_copy.to_json()
         network_weights = network_copy.get_weights()
@@ -167,13 +166,12 @@ class NetworkAgent(Agent):
     #         ))
 
     def remember(self, state, action, reward, next_state):
+        # log the history
 
-        ''' log the history '''
         self.memory.append([state, action, reward, next_state])
 
     def forget(self):
-
-        ''' remove the old history if the memory is too large '''
+        # remove the old history if the memory is too large
 
         if len(self.memory) > self.para_set.MAX_MEMORY_LEN:
             print("length of memory: {0}, before forget".format(len(self.memory)))
@@ -181,7 +179,6 @@ class NetworkAgent(Agent):
             print("length of memory: {0}, after forget".format(len(self.memory)))
 
     def _get_next_estimated_reward(self, next_state):
-
         if self.para_set.DDQN:
             a_max = np.argmax(self.q_network.predict(
                 self.convert_state_to_input(next_state))[0])
@@ -194,9 +191,7 @@ class NetworkAgent(Agent):
             return next_estimated_reward
 
     def update_network_bar(self):
-
-        ''' update Q bar '''
-
+        # update Q bar
         if self.q_bar_outdated >= self.para_set.UPDATE_Q_BAR_FREQ:
             self.q_network_bar = self.build_network_from_copy(self.q_network)
             self.q_bar_outdated = 0

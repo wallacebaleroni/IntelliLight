@@ -39,5 +39,6 @@ conf/Fixedtime*
 data/Fixedtime*
 
 anotacoes.txt
+diario.txt
 resultados.txt
 *.ini
