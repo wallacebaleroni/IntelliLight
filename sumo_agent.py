@@ -81,7 +81,7 @@ class SumoAgent:
         dic_paras = json.load(open(conf_file, "r"))
         return self.ParaSet(dic_paras)
 
-    def get_observation(self):
+    def get_state(self):
         return self.state
 
     def get_current_time(self):
@@ -96,6 +96,7 @@ class SumoAgent:
 
         if self.current_phase_duration < self.para_set.MIN_PHASE_TIME[current_phase_number]:
             action = 0
+
         for i in range(self.para_set.MIN_ACTION_TIME):
             action_in_second = 0
             current_phase_number = self.get_current_phase()

@@ -115,7 +115,6 @@ class DeeplightAgent(NetworkAgent):
         return memory_list
 
     def remember(self, state, action, reward, next_state):
-
         if self.para_set.SEPARATE_MEMORY:
             ''' log the history separately '''
             self.memory[state.cur_phase[0][0]][action].append([state, action, reward, next_state])

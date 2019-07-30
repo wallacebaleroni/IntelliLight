@@ -82,14 +82,12 @@ class Agent(object):
         dic_paras = json.load(open(conf_file, "r"))
         return self.ParaSet(dic_paras)
 
-    def get_state(self, state, count):
-
+    def set_state(self, state):
         ''' set state for agent '''
         self.state = state
         return state
 
-    def get_next_state(self, state, count):
-
+    def set_next_state(self, state):
         return state
 
     def choose(self, count, if_pretrain):

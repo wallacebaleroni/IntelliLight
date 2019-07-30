@@ -74,9 +74,9 @@ class TrafficLightDQN:
         shutil.copy(os.path.join(self.paths_set.PATH_TO_CONF, self.paths_set.EXP_CONF),
                     os.path.join(self.paths_set.PATH_TO_OUTPUT, self.paths_set.EXP_CONF))
 
-        self.agent = self.DIC_AGENTS[self.parameters_set.MODEL_NAME](num_phases=2,
-                                                                     num_actions=2,
-                                                                     path_set=self.paths_set)
+        self.deeplight_agent = self.DIC_AGENTS[self.parameters_set.MODEL_NAME](num_phases=2,
+                                                                               num_actions=2,
+                                                                               path_set=self.paths_set)
 
     def load_conf(self, conf_file):
         dic_paras = json.load(open(conf_file, "r"))
@@ -149,6 +149,8 @@ class TrafficLightDQN:
             phase_traffic_ratios = self._generate_pre_train_ratios(self.parameters_set.BASE_RATIO, em_phase=0)  # en_phase=0
             pre_train_count_per_ratio = math.ceil(total_run_cnt / len(phase_traffic_ratios))
             ind_phase_time = 0
+            print("Current phase ratio: " + str(phase_traffic_ratios[ind_phase_time]) + " | " + str(
+                ind_phase_time + 1) + " out of " + str(len(phase_traffic_ratios)))
         else:
             total_run_cnt = self.parameters_set.RUN_COUNTS
 
@@ -156,51 +158,57 @@ class TrafficLightDQN:
         file_name_memory = os.path.join(self.paths_set.PATH_TO_OUTPUT, "memories.txt")
 
         # start sumo
-        s_agent = SumoAgent(sumo_cmd_str, self.paths_set)
-        current_time = s_agent.get_current_time()  # in seconds
+        sumo_agent = SumoAgent(sumo_cmd_str, self.paths_set)
+        current_time = sumo_agent.get_current_time()  # in seconds
 
         # start experiment
         while current_time < total_run_cnt:
             if if_pretrain:
                 # if episode ends
                 if current_time > pre_train_count_per_ratio:
-                    print("Terminal occured. Episode end.")
-                    s_agent.end_sumo()
+                    print("Pre-train episode end")
+                    sumo_agent.end_sumo()
                     ind_phase_time += 1
                     if ind_phase_time >= len(phase_traffic_ratios):
                         break
 
-                    s_agent = SumoAgent(sumo_cmd_str, self.paths_set)
-                    current_time = s_agent.get_current_time()  # in seconds
+                    print("Current phase ratio: " + str(phase_traffic_ratios[ind_phase_time]) + " | " + str(
+                        ind_phase_time + 1) + " out of " + str(len(phase_traffic_ratios)))
+
+                    sumo_agent = SumoAgent(sumo_cmd_str, self.paths_set)
+                    current_time = sumo_agent.get_current_time()  # in seconds
 
                 phase_time_now = phase_traffic_ratios[ind_phase_time]
 
             f_memory = open(file_name_memory, "a")
 
             # get state
-            state = s_agent.get_observation()
-            state = self.agent.get_state(state, current_time)
+            state = sumo_agent.get_state()
+            self.deeplight_agent.set_state(state)
 
             if if_pretrain:
-                _, q_values = self.agent.choose(count=current_time, if_pretrain=if_pretrain)
-                # TODO: What does this if means?
-                if state.time_this_phase[0][0] < phase_time_now[state.cur_phase[0][0]]:
-                    action_pred = 0
+                _, q_values = self.deeplight_agent.choose(count=current_time, if_pretrain=if_pretrain)
+
+                elapsed_time_on_current_phase = state.time_this_phase[0][0]
+                lenght_of_current_phase = phase_time_now[state.cur_phase[0][0]]
+
+                if elapsed_time_on_current_phase < lenght_of_current_phase:
+                    action_pred = 0  # Keep phase
                 else:
-                    action_pred = 1
+                    action_pred = 1  # Change phase
             else:
                 # get action based on e-greedy, combine current state
-                action_pred, q_values = self.agent.choose(count=current_time, if_pretrain=if_pretrain)
+                action_pred, q_values = self.deeplight_agent.choose(count=current_time, if_pretrain=if_pretrain)
 
             # execute the action and get the reward from sumo agent
-            reward, action = s_agent.take_action(action_pred)
+            reward, action = sumo_agent.take_action(action_pred)
 
             # get next state
-            next_state = s_agent.get_observation()
-            next_state = self.agent.get_next_state(next_state, current_time)
+            next_state = sumo_agent.get_state()
+            self.deeplight_agent.set_next_state(next_state)
 
             # remember
-            self.agent.remember(state, action, reward, next_state)
+            self.deeplight_agent.remember(state, action, reward, next_state)
 
             # output to std out and file
             memory_str = 'time = %d\taction = %d\tcurrent_phase = %d\tnext_phase = %d\treward = %f\t%s' \
@@ -213,18 +221,20 @@ class TrafficLightDQN:
             print(memory_str)
             f_memory.write(memory_str + "\n")
             f_memory.close()
-            current_time = s_agent.get_current_time()  # in seconds
+            current_time = sumo_agent.get_current_time()  # in seconds
 
             if not if_pretrain:
                 # update network
-                self.agent.update_network(if_pretrain, use_average, current_time)
-                self.agent.update_network_bar()
+                self.deeplight_agent.update_network(if_pretrain, use_average, current_time)
+                self.deeplight_agent.update_network_bar()
 
         if if_pretrain:
-            self.agent.set_update_outdated()
-            self.agent.update_network(if_pretrain, use_average, current_time)
-            self.agent.update_network_bar()
-        self.agent.reset_update_count()
+            self.deeplight_agent.set_update_outdated()
+            self.deeplight_agent.update_network(if_pretrain, use_average, current_time)
+            self.deeplight_agent.update_network_bar()
+        self.deeplight_agent.reset_update_count()
+
+
         print("END")
 
 
