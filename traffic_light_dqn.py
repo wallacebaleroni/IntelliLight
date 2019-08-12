@@ -143,8 +143,8 @@ class TrafficLightDQN:
                 os.path.join(self.paths_set.PATH_TO_DATA, file_name),
                 os.path.join(self.paths_set.PATH_TO_OUTPUT, file_name))
 
-    def train(self, sumo_cmd_str, if_pretrain, use_average):
-        if if_pretrain:
+    def train(self, sumo_cmd_str, is_pretrain, use_average):
+        if is_pretrain:
             total_run_cnt = self.parameters_set.RUN_COUNTS_PRETRAIN
             phase_traffic_ratios = self._generate_pre_train_ratios(self.parameters_set.BASE_RATIO, em_phase=0)  # en_phase=0
             pre_train_count_per_ratio = math.ceil(total_run_cnt / len(phase_traffic_ratios))
@@ -163,7 +163,7 @@ class TrafficLightDQN:
 
         # start experiment
         while current_time < total_run_cnt:
-            if if_pretrain:
+            if is_pretrain:
                 # if episode ends
                 if current_time > pre_train_count_per_ratio:
                     print("Pre-train episode end")
@@ -186,8 +186,8 @@ class TrafficLightDQN:
             state = sumo_agent.get_state()
             self.deeplight_agent.set_state(state)
 
-            if if_pretrain:
-                _, q_values = self.deeplight_agent.choose(count=current_time, if_pretrain=if_pretrain)
+            if is_pretrain:
+                _, q_values = self.deeplight_agent.choose(count=current_time, is_pretrain=is_pretrain)
 
                 elapsed_time_on_current_phase = state.time_this_phase[0][0]
                 lenght_of_current_phase = phase_time_now[state.cur_phase[0][0]]
@@ -198,7 +198,7 @@ class TrafficLightDQN:
                     action_pred = 1  # Change phase
             else:
                 # get action based on e-greedy, combine current state
-                action_pred, q_values = self.deeplight_agent.choose(count=current_time, if_pretrain=if_pretrain)
+                action_pred, q_values = self.deeplight_agent.choose(count=current_time, is_pretrain=is_pretrain)
 
             # execute the action and get the reward from sumo agent
             reward, action = sumo_agent.take_action(action_pred)
@@ -223,17 +223,16 @@ class TrafficLightDQN:
             f_memory.close()
             current_time = sumo_agent.get_current_time()  # in seconds
 
-            if not if_pretrain:
+            if not is_pretrain:
                 # update network
-                self.deeplight_agent.update_network(if_pretrain, use_average, current_time)
+                self.deeplight_agent.update_network(is_pretrain, use_average, current_time)
                 self.deeplight_agent.update_network_bar()
 
-        if if_pretrain:
+        if is_pretrain:
             self.deeplight_agent.set_update_outdated()
-            self.deeplight_agent.update_network(if_pretrain, use_average, current_time)
+            self.deeplight_agent.update_network(is_pretrain, use_average, current_time)
             self.deeplight_agent.update_network_bar()
         self.deeplight_agent.reset_update_count()
-
 
         print("END")
 
@@ -242,6 +241,6 @@ def main(memo, f_prefix, sumo_cmd_str, sumo_cmd_pretrain_str):
     # Initializes itself
     player = TrafficLightDQN(memo, f_prefix)
     player.set_traffic_file()
-    player.train(sumo_cmd_pretrain_str, if_pretrain=True, use_average=True)
-    player.train(sumo_cmd_str, if_pretrain=False, use_average=False)
+    #player.train(sumo_cmd_pretrain_str, is_pretrain=True, use_average=True)  # What's referred in the article as offline
+    player.train(sumo_cmd_str, is_pretrain=False, use_average=False)  # What's referred in the article as online
 

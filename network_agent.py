@@ -114,12 +114,12 @@ class NetworkAgent(Agent):
     def save_model(self, file_name):
         self.q_network.save(os.path.join(self.path_set.PATH_TO_MODEL, "%s_q_network.h5" % file_name))
 
-    def choose(self, count, if_pretrain):
+    def choose(self, count, is_pretrain):
         # choose the best action for current state
 
         q_values = self.q_network.predict(self.convert_state_to_input(self.state))
         # print(q_values)
-        if if_pretrain:
+        if is_pretrain:
             self.action = np.argmax(q_values[0])
         else:
             # Exploration

@@ -121,13 +121,13 @@ class DeeplightAgent(NetworkAgent):
         else:
             self.memory.append([state, action, reward, next_state])
 
-    def forget(self, if_pretrain):
+    def forget(self, is_pretrain):
 
         if self.para_set.SEPARATE_MEMORY:
             ''' remove the old history if the memory is too large, in a separate way '''
             for phase_i in range(self.num_phases):
                 for action_i in range(self.num_actions):
-                    if if_pretrain:
+                    if is_pretrain:
                         random.shuffle(self.memory[phase_i][action_i])
                     if len(self.memory[phase_i][action_i]) > self.para_set.MAX_MEMORY_LEN:
                         print("length of memory (state {0}, action {1}): {2}, before forget".format(
@@ -212,9 +212,9 @@ class DeeplightAgent(NetworkAgent):
 
         return dic_state_feature_arrays, Y
 
-    def train_network(self, Xs, Y, prefix, if_pretrain):
+    def train_network(self, Xs, Y, prefix, is_pretrain):
 
-        if if_pretrain:
+        if is_pretrain:
             epochs = self.para_set.EPOCHS_PRETRAIN
         else:
             epochs = self.para_set.EPOCHS
@@ -228,33 +228,29 @@ class DeeplightAgent(NetworkAgent):
                                   verbose=2, validation_split=0.3, callbacks=[early_stopping])
         self.save_model(prefix)
 
-    def update_network(self, if_pretrain, use_average, current_time):
-
-        ''' update Q network '''
-
-        if current_time - self.update_outdated < self.para_set.UPDATE_PERIOD:
+    def update_network(self, is_pretrain, use_average, current_time):
+        # If the UPDATE_PERIOD time already passed it executes
+        if current_time - self.update_outdated >= self.para_set.UPDATE_PERIOD:
+            self.update_outdated = current_time
+        else:
             return
 
-        self.update_outdated = current_time
+        # Selects gamma
+        gamma = self.para_set.GAMMA_PRETRAIN if is_pretrain else self.para_set.GAMMA
 
-        # prepare the samples
-        if if_pretrain:
-            gamma = self.para_set.GAMMA_PRETRAIN
-        else:
-            gamma = self.para_set.GAMMA
-
+        # Initializes an empty dict with the features as keys
         dic_state_feature_arrays = {}
         for feature_name in self.para_set.LIST_STATE_FEATURE:
             dic_state_feature_arrays[feature_name] = []
         Y = []
 
-        # get average state-action reward
+        # Gets average for each state-action pair reward (4x4 float matrix)
         if self.para_set.SEPARATE_MEMORY:
             self.average_reward = self._cal_average_separate(self.memory)
         else:
             self.average_reward = self._cal_average(self.memory)
 
-        # ================ sample memory ====================
+        # Gets a limited sample of each state-action pair
         if self.para_set.SEPARATE_MEMORY:
             for phase_i in range(self.num_phases):
                 for action_i in range(self.num_actions):
@@ -262,7 +258,8 @@ class DeeplightAgent(NetworkAgent):
                         gamma=gamma,
                         with_priority=self.para_set.PRIORITY_SAMPLING,
                         memory=self.memory[phase_i][action_i],
-                        if_pretrain=if_pretrain)
+                        is_pretrain=is_pretrain)
+                    # Appends these samples features to the dict and q-values to Y
                     dic_state_feature_arrays, Y = self.get_sample(
                         sampled_memory, dic_state_feature_arrays, Y, gamma, current_time, use_average)
         else:
@@ -270,28 +267,27 @@ class DeeplightAgent(NetworkAgent):
                 gamma=gamma,
                 with_priority=self.para_set.PRIORITY_SAMPLING,
                 memory=self.memory,
-                if_pretrain=if_pretrain)
+                is_pretrain=is_pretrain)
             dic_state_feature_arrays, Y = self.get_sample(
                 sampled_memory, dic_state_feature_arrays, Y, gamma, current_time, use_average)
-        # ================ sample memory ====================
 
+        # Organizes the data array to better feed it the network
         Xs = [np.array(dic_state_feature_arrays[feature_name]) for feature_name in self.para_set.LIST_STATE_FEATURE]
         Y = np.array(Y)
         sample_weight = np.ones(len(Y))
-        # shuffle the training samples, especially for different phases and actions
+        # Shuffle the training samples, especially for different phases and actions
         Xs, Y, _ = self._unison_shuffled_copies(Xs, Y, sample_weight)
 
-        # ============================  training  =======================================
-
-        self.train_network(Xs, Y, current_time, if_pretrain)
+        # Training
+        self.train_network(Xs, Y, current_time, is_pretrain)
         self.q_bar_outdated += 1
-        self.forget(if_pretrain=if_pretrain)
+        self.forget(is_pretrain=is_pretrain)
 
-    def _sample_memory(self, gamma, with_priority, memory, if_pretrain):
+    def _sample_memory(self, gamma, with_priority, memory, is_pretrain):
 
         len_memory = len(memory)
 
-        if not if_pretrain:
+        if not is_pretrain:
             sample_size = min(self.para_set.SAMPLE_SIZE, len_memory)
         else:
             sample_size = min(self.para_set.SAMPLE_SIZE_PRETRAIN, len_memory)

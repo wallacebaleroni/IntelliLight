@@ -90,7 +90,7 @@ class Agent(object):
     def set_next_state(self, state):
         return state
 
-    def choose(self, count, if_pretrain):
+    def choose(self, count, is_pretrain):
 
         ''' choose the best action for current state '''
 
@@ -105,7 +105,7 @@ class Agent(object):
 
         pass
 
-    def update_network(self, if_pretrain, use_average, current_time):
+    def update_network(self, is_pretrain, use_average, current_time):
         pass
 
     def update_network_bar(self):
