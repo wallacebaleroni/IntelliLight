@@ -160,23 +160,26 @@ class DeeplightAgent(NetworkAgent):
 
         return average_reward
 
-    def _cal_average_separate(self,sample_memory):
-        ''' Calculate average rewards for different cases '''
-
+    def _cal_average_separate(self, sample_memory):
+        # Calculate average rewards for different cases
         average_reward = np.zeros((self.num_phases, self.num_actions))
+
         for phase_i in range(self.num_phases):
             for action_i in range(self.num_actions):
                 len_sample_memory = len(sample_memory[phase_i][action_i])
+
                 if len_sample_memory > 0:
                     list_reward = []
+
                     for i in range(len_sample_memory):
                         state, action, reward, _ = sample_memory[phase_i][action_i][i]
                         list_reward.append(reward)
-                    average_reward[phase_i][action_i]=np.average(list_reward)
+
+                    average_reward[phase_i][action_i] = np.average(list_reward)
+
         return average_reward
 
     def get_sample(self, memory_slice, dic_state_feature_arrays, Y, gamma, prefix, use_average):
-
         len_memory_slice = len(memory_slice)
 
         f_samples = open(os.path.join(self.path_set.PATH_TO_OUTPUT, "{0}_memory".format(prefix)), "a")
@@ -190,7 +193,9 @@ class DeeplightAgent(NetworkAgent):
                 next_estimated_reward = 0
             else:
                 next_estimated_reward = self._get_next_estimated_reward(next_state)
+
             total_reward = reward + gamma * next_estimated_reward
+
             if not use_average:
                 target = self.q_network.predict(
                     self.convert_state_to_input(state))
@@ -204,16 +209,13 @@ class DeeplightAgent(NetworkAgent):
             for feature_name in self.para_set.LIST_STATE_FEATURE:
                 if "map" not in feature_name:
                     f_samples.write("{0}\t".format(str(getattr(state, feature_name))))
-            f_samples.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(
-                str(pre_target), str(target),
-                str(action), str(reward), str(next_estimated_reward)
-            ))
+            f_samples.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(str(pre_target), str(target), str(action), str(reward), str(next_estimated_reward)))
+
         f_samples.close()
 
         return dic_state_feature_arrays, Y
 
     def train_network(self, Xs, Y, prefix, is_pretrain):
-
         if is_pretrain:
             epochs = self.para_set.EPOCHS_PRETRAIN
         else:
@@ -224,8 +226,8 @@ class DeeplightAgent(NetworkAgent):
             monitor='val_loss', patience=self.para_set.PATIENCE, verbose=0, mode='min')
 
         hist = self.q_network.fit(Xs, Y, batch_size=batch_size, epochs=epochs,
-                                  shuffle=False,
-                                  verbose=2, validation_split=0.3, callbacks=[early_stopping])
+                                  shuffle=False, verbose=2,
+                                  validation_split=0.3, callbacks=[early_stopping])
         self.save_model(prefix)
 
     def update_network(self, is_pretrain, use_average, current_time):
